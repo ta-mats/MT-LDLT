@@ -16,7 +16,7 @@ path <- getwd()
 }
 
 
-df_lossnonloss<- read.csv(''&path&'/Data/Loss_nonloss_compare_R.csv', na.strings = c(" ", "NA"))
+df_lossnonloss<- read.csv(''&path&'/Data/Loss_nonloss_compare_R_revise.csv', na.strings = c(" ", "NA"))
 df_lossnonloss
 #Index Marking Setup
 scientific_notation <- function(x) {
@@ -37,7 +37,9 @@ violinPertwo <- function(data,cluster_type="graftloss_within_6months",value='val
     geom_segment(x = 1, xend = 1, y = y_range[2]+0.02*diff(y_range), yend = y_range[2]+0.005*diff(y_range)) +
     geom_segment(x = 1, xend = 2, y = y_range[2]+0.02*diff(y_range), yend = y_range[2]+0.02*diff(y_range)) +
     geom_segment(x = 2, xend = 2, y = y_range[2]+0.02*diff(y_range), yend = y_range[2]+0.005*diff(y_range))+
-    
+    # 正常範囲の上下限に横線を追加
+    geom_hline(yintercept = normal_min, linetype = "dashed", color = "blue") +
+    geom_hline(yintercept = normal_max, linetype = "dashed", color = "blue") +
     stat_summary(fun = "mean", geom = "point", shape = 23, size = 1.5, alpha=1, fill = "black") + #Mean
     scale_fill_manual(values = cols) +# Color
     scale_y_continuous(limits = c(y_range[1], y_range[2]+y_range[2]/25),breaks = scales::breaks_pretty(5),labels = if (i <= 2 ) scientific_notation else scales::label_number()) +
@@ -66,7 +68,9 @@ colreal <- c("ascites (30POD)","ascites (14POD)","T-BIL (14POD)",
              "PT% (14POD)","D max T-BIL")
 #Unit list
 ylabel_l <- c("mL",'mL','mg/dL','%','mg/dL')
-
+# 例: 正常範囲を定義するベクトル
+normal_range_min <- c("ascite_30POD_" = 0, "ascite_14POD_" = 0, "T_BIL_14POD_" = 0.4,"PT_per14POD_"=70, "donor_max_TB"= 0.4)  # item名に対応
+normal_range_max <- c("ascite_30POD_" = 0, "ascite_14POD_" = 0, "T_BIL_14POD_" = 1.5,"PT_per14POD_"=130 , "donor_max_TB" = 1.5 )
 for(i in 1:length(colna)){
   a <- df_lossnonloss[which(df_lossnonloss$item == colna[i]),]
   a <- a[which(a$graftloss_within_6months == 'True'),]
@@ -90,7 +94,7 @@ for(i in 1:length(colna)){
     xlabel<-""
     ylabel<-ylabel_l[i]
     
-    filename = ''&path&'/Output/Fig1/Fig1F_'&colsave[i]&'.pdf'
+    filename = ''&path&'/Output/Fig1/Fig1F_'&colsave[i]&'_revise.pdf'
     cols <- c('#ccff00','#808080')#color
     y_range<-range(data_use$value)
     cluster_type="graftloss_within_6months"
@@ -98,6 +102,10 @@ for(i in 1:length(colna)){
     label_text1 <- ifelse(significance_level1 < 0.001, "***", ifelse(significance_level1 < 0.01, "**", ifelse(significance_level1 < 0.05, "*", "N.S.")))
     font_size1 <- ifelse(significance_level1 < 0.001, 10, ifelse(significance_level1 < 0.01, 10,  ifelse(significance_level1 < 0.05, 10, 12)))
     distance1 <-  ifelse(significance_level1 < 0.001, 0.02, ifelse(significance_level1 < 0.01, 0.02,  ifelse(significance_level1 < 0.05, 0.02, 0.08)))
+    # 今回の項目に対応した正常範囲を取得
+    item_name <- colna[i]
+    normal_min <- normal_range_min[item_name]
+    normal_max <- normal_range_max[item_name]
     plt<- violinPertwo(data_use,cluster_type="graftloss_within_6months",value='value',label_text1,font_size1,y_range,title,ylabel,cols,filename)
     
     # 
@@ -116,6 +124,10 @@ for(i in 1:length(colna)){
     label_text1 <- ifelse(significance_level1 < 0.001, "***", ifelse(significance_level1 < 0.01, "**", ifelse(significance_level1 < 0.05, "*", "N.S.")))
     font_size1 <- ifelse(significance_level1 < 0.001, 12, ifelse(significance_level1 < 0.01, 12,  ifelse(significance_level1 < 0.05, 12, 8)))
     distance1 <-  ifelse(significance_level1 < 0.001, 0.02, ifelse(significance_level1 < 0.01, 0.02,  ifelse(significance_level1 < 0.05, 0.02, 0.09)))
+    # 今回の項目に対応した正常範囲を取得
+    item_name <- colna[i]
+    normal_min <- normal_range_min[item_name]
+    normal_max <- normal_range_max[item_name]
     plt<- violinPertwo(data_use,cluster_type="graftloss_within_6months",value='value',label_text1,font_size1,y_range,title,ylabel,cols,filename)
     
     cat("No significant difference")
@@ -123,10 +135,10 @@ for(i in 1:length(colna)){
 }
 
 #Categorical
-df_lossnonloss_ca<- read.csv(''&path&'/Data/Loss_nonloss_compare_categorical_R.csv', na.strings = c(" ", "NA"))
+df_lossnonloss_ca<- read.csv(''&path&'/Data/Loss_nonloss_compare_categorical_R_revise.csv', na.strings = c(" ", "NA"))
 
 explanational <- colnames(df_lossnonloss_ca[1:2])
-title_l <- c("precondition Home","Right lobectomy")
+title_l <- c("precondition Home","Splenectomy")
 #Plot function
 test_plot<-function(n,p_values,data,objective,explanation,filename2,title){
   k =1
@@ -265,7 +277,7 @@ for (a in 1:length(explanational)){
   print(p_values)
   explanation2 <- explanational[[a]]
   title <- title_l[[a]]
-  filename2<- ''&path&'/Output/Fig1/Fig1F_'&title_l[a]&'.pdf'
+  filename2<- ''&path&'/Output/Fig1/Fig1F_'&title_l[a]&'_revise.pdf'
   
   plts <- test_plot(n,p_values,df_lossnonloss_ca,objective,explanation,filename2,title)  
 }
